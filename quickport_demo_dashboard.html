@@ -1,0 +1,529 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Quickport CRM - Demo Dashboard</title>
+    <style>
+        * {
+            margin: 0;
+            padding: 0;
+            box-sizing: border-box;
+        }
+
+        body {
+            font-family: 'Segoe UI', Tahoma, Geneva, Verdana, sans-serif;
+            background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
+            min-height: 100vh;
+            display: flex;
+            justify-content: center;
+            align-items: center;
+        }
+
+        .container {
+            background: white;
+            border-radius: 20px;
+            box-shadow: 0 20px 40px rgba(0,0,0,0.1);
+            overflow: hidden;
+            width: 90%;
+            max-width: 1200px;
+            min-height: 700px;
+        }
+
+        .login-container {
+            display: flex;
+            height: 700px;
+        }
+
+        .login-left {
+            flex: 1;
+            background: linear-gradient(135deg, #4f46e5 0%, #7c3aed 100%);
+            color: white;
+            padding: 60px;
+            display: flex;
+            flex-direction: column;
+            justify-content: center;
+        }
+
+        .login-right {
+            flex: 1;
+            padding: 60px;
+            display: flex;
+            flex-direction: column;
+            justify-content: center;
+        }
+
+        .logo {
+            font-size: 2.5rem;
+            font-weight: bold;
+            margin-bottom: 20px;
+            background: linear-gradient(45deg, #fbbf24, #f59e0b);
+            -webkit-background-clip: text;
+            -webkit-text-fill-color: transparent;
+        }
+
+        .tagline {
+            font-size: 1.2rem;
+            opacity: 0.9;
+            margin-bottom: 40px;
+        }
+
+        .features {
+            list-style: none;
+        }
+
+        .features li {
+            margin: 15px 0;
+            padding-left: 30px;
+            position: relative;
+        }
+
+        .features li:before {
+            content: "✓";
+            position: absolute;
+            left: 0;
+            color: #fbbf24;
+            font-weight: bold;
+        }
+
+        .form-group {
+            margin-bottom: 25px;
+        }
+
+        .form-group label {
+            display: block;
+            margin-bottom: 8px;
+            font-weight: 600;
+            color: #374151;
+        }
+
+        .form-group input {
+            width: 100%;
+            padding: 15px;
+            border: 2px solid #e5e7eb;
+            border-radius: 10px;
+            font-size: 16px;
+            transition: all 0.3s ease;
+        }
+
+        .form-group input:focus {
+            outline: none;
+            border-color: #4f46e5;
+            box-shadow: 0 0 0 3px rgba(79, 70, 229, 0.1);
+        }
+
+        .btn {
+            width: 100%;
+            background: linear-gradient(135deg, #4f46e5 0%, #7c3aed 100%);
+            color: white;
+            padding: 15px;
+            border: none;
+            border-radius: 10px;
+            font-size: 16px;
+            font-weight: 600;
+            cursor: pointer;
+            transition: all 0.3s ease;
+            margin-bottom: 20px;
+        }
+
+        .btn:hover {
+            transform: translateY(-2px);
+            box-shadow: 0 10px 20px rgba(79, 70, 229, 0.3);
+        }
+
+        .dashboard {
+            display: none;
+            padding: 40px;
+        }
+
+        .dashboard-header {
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+            margin-bottom: 40px;
+            padding-bottom: 20px;
+            border-bottom: 2px solid #e5e7eb;
+        }
+
+        .welcome-message {
+            font-size: 1.8rem;
+            color: #1f2937;
+        }
+
+        .user-info {
+            background: linear-gradient(135deg, #4f46e5 0%, #7c3aed 100%);
+            color: white;
+            padding: 15px 25px;
+            border-radius: 10px;
+            font-weight: 600;
+        }
+
+        .stats-grid {
+            display: grid;
+            grid-template-columns: repeat(auto-fit, minmax(250px, 1fr));
+            gap: 25px;
+            margin-bottom: 40px;
+        }
+
+        .stat-card {
+            background: white;
+            border-radius: 15px;
+            padding: 30px;
+            box-shadow: 0 10px 30px rgba(0,0,0,0.1);
+            border-left: 5px solid;
+            transition: all 0.3s ease;
+        }
+
+        .stat-card:hover {
+            transform: translateY(-5px);
+            box-shadow: 0 20px 40px rgba(0,0,0,0.15);
+        }
+
+        .stat-card.appointments {
+            border-left-color: #10b981;
+        }
+
+        .stat-card.customers {
+            border-left-color: #3b82f6;
+        }
+
+        .stat-card.revenue {
+            border-left-color: #f59e0b;
+        }
+
+        .stat-card.emails {
+            border-left-color: #8b5cf6;
+        }
+
+        .stat-number {
+            font-size: 2.5rem;
+            font-weight: bold;
+            color: #1f2937;
+            margin-bottom: 10px;
+        }
+
+        .stat-label {
+            color: #6b7280;
+            font-size: 1rem;
+            text-transform: uppercase;
+            letter-spacing: 1px;
+        }
+
+        .email-status {
+            background: #f8fafc;
+            border-radius: 15px;
+            padding: 30px;
+            margin-top: 30px;
+        }
+
+        .status-header {
+            font-size: 1.3rem;
+            font-weight: 600;
+            margin-bottom: 20px;
+            color: #1f2937;
+        }
+
+        .status-item {
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+            padding: 15px 0;
+            border-bottom: 1px solid #e5e7eb;
+        }
+
+        .status-item:last-child {
+            border-bottom: none;
+        }
+
+        .status-badge {
+            padding: 6px 12px;
+            border-radius: 20px;
+            font-size: 0.8rem;
+            font-weight: 600;
+            text-transform: uppercase;
+            letter-spacing: 0.5px;
+        }
+
+        .status-success {
+            background: #dcfce7;
+            color: #166534;
+        }
+
+        .status-pending {
+            background: #fef3c7;
+            color: #92400e;
+        }
+
+        .demo-info {
+            background: linear-gradient(135deg, #fbbf24, #f59e0b);
+            color: white;
+            padding: 20px;
+            border-radius: 10px;
+            margin-bottom: 30px;
+            text-align: center;
+        }
+
+        .demo-credentials {
+            background: #f3f4f6;
+            padding: 20px;
+            border-radius: 10px;
+            margin-top: 20px;
+        }
+
+        .demo-credentials h3 {
+            margin-bottom: 15px;
+            color: #374151;
+        }
+
+        .credential-item {
+            display: flex;
+            justify-content: space-between;
+            margin: 10px 0;
+            padding: 8px;
+            background: white;
+            border-radius: 5px;
+        }
+
+        @media (max-width: 768px) {
+            .login-container {
+                flex-direction: column;
+                height: auto;
+            }
+            
+            .login-left, .login-right {
+                padding: 40px;
+            }
+            
+            .stats-grid {
+                grid-template-columns: 1fr;
+            }
+        }
+    </style>
+</head>
+<body>
+    <div class="container">
+        <!-- Login Section -->
+        <div id="loginSection" class="login-container">
+            <div class="login-left">
+                <div class="logo">QUICKPORT</div>
+                <div class="tagline">Streamline Your Customer Relationships</div>
+                <ul class="features">
+                    <li>Smart Appointment Management</li>
+                    <li>Automated Email Notifications</li>
+                    <li>Customer Communication Hub</li>
+                    <li>Real-time Analytics Dashboard</li>
+                    <li>Multi-channel Integration</li>
+                </ul>
+            </div>
+            <div class="login-right">
+                <div class="demo-info">
+                    <h2>Demo Version</h2>
+                    <p>Experience automated email workflows powered by MSG91 + ViaSocket integration</p>
+                </div>
+                
+                <form id="loginForm">
+                    <div class="form-group">
+                        <label for="email">Email Address</label>
+                        <input type="email" id="email" name="email" value="demo@quickport.co.in" required>
+                    </div>
+                    <div class="form-group">
+                        <label for="password">Password</label>
+                        <input type="password" id="password" name="password" value="demo123" required>
+                    </div>
+                    <button type="submit" class="btn">Sign In to Dashboard</button>
+                </form>
+                
+                <div class="demo-credentials">
+                    <h3>Demo Credentials</h3>
+                    <div class="credential-item">
+                        <span>Email:</span>
+                        <span>demo@quickport.co.in</span>
+                    </div>
+                    <div class="credential-item">
+                        <span>Password:</span>
+                        <span>demo123</span>
+                    </div>
+                </div>
+            </div>
+        </div>
+
+        <!-- Dashboard Section -->
+        <div id="dashboardSection" class="dashboard">
+            <div class="dashboard-header">
+                <div class="welcome-message">Welcome to Quickport CRM</div>
+                <div class="user-info">
+                    <span id="userName">Demo User</span>
+                    <button onclick="logout()" style="margin-left: 15px; background: rgba(255,255,255,0.2); border: none; color: white; padding: 8px 15px; border-radius: 5px; cursor: pointer;">Logout</button>
+                </div>
+            </div>
+
+            <div class="stats-grid">
+                <div class="stat-card appointments">
+                    <div class="stat-number">24</div>
+                    <div class="stat-label">Today's Appointments</div>
+                </div>
+                <div class="stat-card customers">
+                    <div class="stat-number">1,247</div>
+                    <div class="stat-label">Total Customers</div>
+                </div>
+                <div class="stat-card revenue">
+                    <div class="stat-number">₹89,540</div>
+                    <div class="stat-label">This Month Revenue</div>
+                </div>
+                <div class="stat-card emails">
+                    <div class="stat-number" id="emailCount">0</div>
+                    <div class="stat-label">Emails Sent Today</div>
+                </div>
+            </div>
+
+            <div class="email-status">
+                <div class="status-header">Email Automation Status</div>
+                <div id="emailStatusList">
+                    <div class="status-item">
+                        <span>System Status</span>
+                        <span class="status-badge status-success">Active</span>
+                    </div>
+                    <div class="status-item">
+                        <span>MSG91 Integration</span>
+                        <span class="status-badge status-success">Connected</span>
+                    </div>
+                    <div class="status-item">
+                        <span>ViaSocket Workflow</span>
+                        <span class="status-badge status-success">Running</span>
+                    </div>
+                </div>
+            </div>
+        </div>
+    </div>
+
+    <script>
+        // Demo user credentials
+        const demoCredentials = {
+            email: 'demo@quickport.co.in',
+            password: 'demo123'
+        };
+
+        // ViaSocket webhook URL (replace with your actual webhook)
+        const VIASOCKET_WEBHOOK = 'YOUR_VIASOCKET_WEBHOOK_URL_HERE';
+
+        document.getElementById('loginForm').addEventListener('submit', async function(e) {
+            e.preventDefault();
+            
+            const email = document.getElementById('email').value;
+            const password = document.getElementById('password').value;
+            
+            // Validate credentials
+            if (email === demoCredentials.email && password === demoCredentials.password) {
+                // Show dashboard
+                document.getElementById('loginSection').style.display = 'none';
+                document.getElementById('dashboardSection').style.display = 'block';
+                
+                // Set user name
+                document.getElementById('userName').textContent = email;
+                
+                // Trigger welcome email
+                await sendWelcomeEmail(email);
+                
+                // Update email count
+                updateEmailCount();
+                
+            } else {
+                alert('Invalid credentials! Please use demo@quickport.co.in / demo123');
+            }
+        });
+
+        async function sendWelcomeEmail(email) {
+            const emailData = {
+                name: 'Demo User',
+                email: email,
+                loginTime: new Date().toLocaleString(),
+                action: 'welcome_email'
+            };
+
+            try {
+                // In production, this would call your ViaSocket webhook
+                console.log('Sending welcome email via ViaSocket:', emailData);
+                
+                // Simulate API call
+                await new Promise(resolve => setTimeout(resolve, 1000));
+                
+                // Add email status to the list
+                addEmailStatus('Welcome Email Sent', 'success', email);
+                
+                // Show success message
+                setTimeout(() => {
+                    alert('Welcome email sent successfully to ' + email);
+                }, 1500);
+                
+            } catch (error) {
+                console.error('Error sending email:', error);
+                addEmailStatus('Welcome Email Failed', 'pending', email);
+            }
+        }
+
+        function addEmailStatus(message, status, recipient) {
+            const statusList = document.getElementById('emailStatusList');
+            const statusItem = document.createElement('div');
+            statusItem.className = 'status-item';
+            statusItem.innerHTML = `
+                <span>${message} to ${recipient}</span>
+                <span class="status-badge status-${status}">${status === 'success' ? 'Delivered' : 'Pending'}</span>
+            `;
+            statusList.appendChild(statusItem);
+        }
+
+        function updateEmailCount() {
+            const currentCount = parseInt(document.getElementById('emailCount').textContent);
+            document.getElementById('emailCount').textContent = currentCount + 1;
+        }
+
+        function logout() {
+            document.getElementById('loginSection').style.display = 'flex';
+            document.getElementById('dashboardSection').style.display = 'none';
+            
+            // Reset form
+            document.getElementById('email').value = 'sngunjal@gmail.com';
+            document.getElementById('password').value = 'demo123';
+            
+            // Clear email status (keep system status)
+            const statusList = document.getElementById('emailStatusList');
+            const systemItems = statusList.querySelectorAll('.status-item');
+            // Keep first 3 items (system status), remove email notifications
+            while (statusList.children.length > 3) {
+                statusList.removeChild(statusList.lastChild);
+            }
+        }
+
+        // Integration Instructions (for production deployment)
+        console.log(`
+        🚀 ViaSocket Integration Setup:
+        
+        1. Replace VIASOCKET_WEBHOOK variable with your actual webhook URL
+        2. Configure MSG91 email action in ViaSocket workflow
+        3. Map the following data fields:
+           - name: {{trigger.name}}
+           - email: {{trigger.email}}
+           - loginTime: {{trigger.loginTime}}
+           - action: {{trigger.action}}
+        
+        4. Email template for welcome message:
+           Subject: Welcome to Quickport CRM - {{name}}
+           Body: 
+           Dear {{name}},
+           
+           Welcome to Quickport CRM! Your account login was successful at {{loginTime}}.
+           
+           Your CRM dashboard is now ready for:
+           • Managing customer appointments
+           • Automated email notifications
+           • Real-time business analytics
+           
+           Best regards,
+           Quickport CRM Team
+           
+           Email: crm@quickport.co.in
+           Website: www.quickport.co.in
+        `);
+    </script>
+</body>
+</html>
