@@ -3,7 +3,7 @@
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>Quickport CRM - Demo Dashboard</title>
+    <title>Quickport CRM - Business Registration</title>
     <style>
         * {
             margin: 0;
@@ -30,12 +30,12 @@
             min-height: 700px;
         }
 
-        .login-container {
+        .signup-container {
             display: flex;
             height: 700px;
         }
 
-        .login-left {
+        .signup-left {
             flex: 1;
             background: linear-gradient(135deg, #4f46e5 0%, #7c3aed 100%);
             color: white;
@@ -45,7 +45,7 @@
             justify-content: center;
         }
 
-        .login-right {
+        .signup-right {
             flex: 1;
             padding: 60px;
             display: flex;
@@ -112,6 +112,41 @@
             box-shadow: 0 0 0 3px rgba(79, 70, 229, 0.1);
         }
 
+        .email-group {
+            display: flex;
+            gap: 10px;
+            align-items: end;
+        }
+
+        .email-input {
+            flex: 1;
+        }
+
+        .verify-btn {
+            background: linear-gradient(135deg, #10b981 0%, #059669 100%);
+            color: white;
+            padding: 15px 20px;
+            border: none;
+            border-radius: 10px;
+            font-size: 14px;
+            font-weight: 600;
+            cursor: pointer;
+            transition: all 0.3s ease;
+            white-space: nowrap;
+        }
+
+        .verify-btn:hover {
+            transform: translateY(-2px);
+            box-shadow: 0 10px 20px rgba(16, 185, 129, 0.3);
+        }
+
+        .verify-btn:disabled {
+            background: #9ca3af;
+            cursor: not-allowed;
+            transform: none;
+            box-shadow: none;
+        }
+
         .btn {
             width: 100%;
             background: linear-gradient(135deg, #4f46e5 0%, #7c3aed 100%);
@@ -123,7 +158,7 @@
             font-weight: 600;
             cursor: pointer;
             transition: all 0.3s ease;
-            margin-bottom: 20px;
+            margin-top: 20px;
         }
 
         .btn:hover {
@@ -131,398 +166,326 @@
             box-shadow: 0 10px 20px rgba(79, 70, 229, 0.3);
         }
 
-        .dashboard {
+        .btn:disabled {
+            background: #9ca3af;
+            cursor: not-allowed;
+            transform: none;
+            box-shadow: none;
+        }
+
+        .success-message {
             display: none;
+            text-align: center;
             padding: 40px;
         }
 
-        .dashboard-header {
-            display: flex;
-            justify-content: space-between;
-            align-items: center;
-            margin-bottom: 40px;
-            padding-bottom: 20px;
-            border-bottom: 2px solid #e5e7eb;
-        }
-
-        .welcome-message {
-            font-size: 1.8rem;
-            color: #1f2937;
-        }
-
-        .user-info {
-            background: linear-gradient(135deg, #4f46e5 0%, #7c3aed 100%);
-            color: white;
-            padding: 15px 25px;
-            border-radius: 10px;
-            font-weight: 600;
-        }
-
-        .stats-grid {
-            display: grid;
-            grid-template-columns: repeat(auto-fit, minmax(250px, 1fr));
-            gap: 25px;
-            margin-bottom: 40px;
-        }
-
-        .stat-card {
-            background: white;
-            border-radius: 15px;
-            padding: 30px;
-            box-shadow: 0 10px 30px rgba(0,0,0,0.1);
-            border-left: 5px solid;
-            transition: all 0.3s ease;
-        }
-
-        .stat-card:hover {
-            transform: translateY(-5px);
-            box-shadow: 0 20px 40px rgba(0,0,0,0.15);
-        }
-
-        .stat-card.appointments {
-            border-left-color: #10b981;
-        }
-
-        .stat-card.customers {
-            border-left-color: #3b82f6;
-        }
-
-        .stat-card.revenue {
-            border-left-color: #f59e0b;
-        }
-
-        .stat-card.emails {
-            border-left-color: #8b5cf6;
-        }
-
-        .stat-number {
-            font-size: 2.5rem;
-            font-weight: bold;
-            color: #1f2937;
-            margin-bottom: 10px;
-        }
-
-        .stat-label {
-            color: #6b7280;
-            font-size: 1rem;
-            text-transform: uppercase;
-            letter-spacing: 1px;
-        }
-
-        .email-status {
-            background: #f8fafc;
-            border-radius: 15px;
-            padding: 30px;
-            margin-top: 30px;
-        }
-
-        .status-header {
-            font-size: 1.3rem;
-            font-weight: 600;
+        .success-icon {
+            font-size: 4rem;
+            color: #10b981;
             margin-bottom: 20px;
-            color: #1f2937;
         }
 
-        .status-item {
-            display: flex;
-            justify-content: space-between;
-            align-items: center;
-            padding: 15px 0;
-            border-bottom: 1px solid #e5e7eb;
-        }
-
-        .status-item:last-child {
-            border-bottom: none;
-        }
-
-        .status-badge {
-            padding: 6px 12px;
-            border-radius: 20px;
-            font-size: 0.8rem;
-            font-weight: 600;
-            text-transform: uppercase;
-            letter-spacing: 0.5px;
+        .verification-status {
+            margin-top: 10px;
+            padding: 10px;
+            border-radius: 5px;
+            font-size: 14px;
+            display: none;
         }
 
         .status-success {
             background: #dcfce7;
             color: #166534;
+            border: 1px solid #bbf7d0;
+        }
+
+        .status-error {
+            background: #fef2f2;
+            color: #dc2626;
+            border: 1px solid #fecaca;
         }
 
         .status-pending {
             background: #fef3c7;
             color: #92400e;
-        }
-
-        .demo-info {
-            background: linear-gradient(135deg, #fbbf24, #f59e0b);
-            color: white;
-            padding: 20px;
-            border-radius: 10px;
-            margin-bottom: 30px;
-            text-align: center;
-        }
-
-        .demo-credentials {
-            background: #f3f4f6;
-            padding: 20px;
-            border-radius: 10px;
-            margin-top: 20px;
-        }
-
-        .demo-credentials h3 {
-            margin-bottom: 15px;
-            color: #374151;
-        }
-
-        .credential-item {
-            display: flex;
-            justify-content: space-between;
-            margin: 10px 0;
-            padding: 8px;
-            background: white;
-            border-radius: 5px;
+            border: 1px solid #fde68a;
         }
 
         @media (max-width: 768px) {
-            .login-container {
+            .signup-container {
                 flex-direction: column;
                 height: auto;
             }
             
-            .login-left, .login-right {
+            .signup-left, .signup-right {
                 padding: 40px;
             }
             
-            .stats-grid {
-                grid-template-columns: 1fr;
+            .email-group {
+                flex-direction: column;
+                align-items: stretch;
+            }
+            
+            .verify-btn {
+                margin-top: 10px;
             }
         }
     </style>
 </head>
 <body>
     <div class="container">
-        <!-- Login Section -->
-        <div id="loginSection" class="login-container">
-            <div class="login-left">
+        <!-- Business Signup Section -->
+        <div id="signupSection" class="signup-container">
+            <div class="signup-left">
                 <div class="logo">QUICKPORT</div>
-                <div class="tagline">Streamline Your Customer Relationships</div>
+                <div class="tagline">Streamline Your Business Communications</div>
                 <ul class="features">
-                    <li>Smart Appointment Management</li>
-                    <li>Automated Email Notifications</li>
-                    <li>Customer Communication Hub</li>
-                    <li>Real-time Analytics Dashboard</li>
-                    <li>Multi-channel Integration</li>
+                    <li>Automated Customer Notifications</li>
+                    <li>Multi-Channel Communication Hub</li>
+                    <li>Real-time Business Analytics</li>
+                    <li>Appointment Management System</li>
+                    <li>Professional Email & SMS Integration</li>
                 </ul>
             </div>
-            <div class="login-right">
-                <div class="demo-info">
-                    <h2>Demo Version</h2>
-                    <p>Experience automated email workflows powered by MSG91 + ViaSocket integration</p>
-                </div>
+            <div class="signup-right">
+                <h2 style="margin-bottom: 30px; color: #1f2937; text-align: center;">Start Your Business Journey</h2>
                 
-                <form id="loginForm">
+                <form id="businessSignupForm">
                     <div class="form-group">
-                        <label for="email">Email Address</label>
-                        <input type="email" id="email" name="email" value="demo@quickport.co.in" required>
+                        <label for="businessName">Business Name *</label>
+                        <input type="text" id="businessName" name="businessName" required placeholder="Enter your business name">
                     </div>
+                    
                     <div class="form-group">
-                        <label for="password">Password</label>
-                        <input type="password" id="password" name="password" value="demo123" required>
+                        <label for="phoneNumber">Phone Number *</label>
+                        <input type="tel" id="phoneNumber" name="phoneNumber" required placeholder="+91 XXXXXXXXXX">
                     </div>
-                    <button type="submit" class="btn">Sign In to Dashboard</button>
+                    
+                    <div class="form-group">
+                        <label for="email">Email Address *</label>
+                        <div class="email-group">
+                            <div class="email-input">
+                                <input type="email" id="email" name="email" required placeholder="your@business.com">
+                                <div id="verificationStatus" class="verification-status"></div>
+                            </div>
+                            <button type="button" id="verifyEmailBtn" class="verify-btn">Verify Email</button>
+                        </div>
+                    </div>
+                    
+                    <button type="submit" id="signupBtn" class="btn" disabled>Complete Registration</button>
                 </form>
-                
-                <div class="demo-credentials">
-                    <h3>Demo Credentials</h3>
-                    <div class="credential-item">
-                        <span>Email:</span>
-                        <span>demo@quickport.co.in</span>
-                    </div>
-                    <div class="credential-item">
-                        <span>Password:</span>
-                        <span>demo123</span>
-                    </div>
-                </div>
             </div>
         </div>
 
-        <!-- Dashboard Section -->
-        <div id="dashboardSection" class="dashboard">
-            <div class="dashboard-header">
-                <div class="welcome-message">Welcome to Quickport CRM</div>
-                <div class="user-info">
-                    <span id="userName">Demo User</span>
-                    <button onclick="logout()" style="margin-left: 15px; background: rgba(255,255,255,0.2); border: none; color: white; padding: 8px 15px; border-radius: 5px; cursor: pointer;">Logout</button>
-                </div>
-            </div>
-
-            <div class="stats-grid">
-                <div class="stat-card appointments">
-                    <div class="stat-number">24</div>
-                    <div class="stat-label">Today's Appointments</div>
-                </div>
-                <div class="stat-card customers">
-                    <div class="stat-number">1,247</div>
-                    <div class="stat-label">Total Customers</div>
-                </div>
-                <div class="stat-card revenue">
-                    <div class="stat-number">₹89,540</div>
-                    <div class="stat-label">This Month Revenue</div>
-                </div>
-                <div class="stat-card emails">
-                    <div class="stat-number" id="emailCount">0</div>
-                    <div class="stat-label">Emails Sent Today</div>
-                </div>
-            </div>
-
-            <div class="email-status">
-                <div class="status-header">Email Automation Status</div>
-                <div id="emailStatusList">
-                    <div class="status-item">
-                        <span>System Status</span>
-                        <span class="status-badge status-success">Active</span>
-                    </div>
-                    <div class="status-item">
-                        <span>MSG91 Integration</span>
-                        <span class="status-badge status-success">Connected</span>
-                    </div>
-                    <div class="status-item">
-                        <span>ViaSocket Workflow</span>
-                        <span class="status-badge status-success">Running</span>
-                    </div>
-                </div>
+        <!-- Success Message Section -->
+        <div id="successSection" class="success-message">
+            <div class="success-icon">✅</div>
+            <h2 style="color: #1f2937; margin-bottom: 20px;">Registration Successful!</h2>
+            <p style="color: #6b7280; margin-bottom: 30px;">
+                Welcome to Quickport CRM! We've sent you a verification email with your account details.
+            </p>
+            <div style="background: #f3f4f6; padding: 20px; border-radius: 10px; margin: 20px 0;">
+                <h3 style="color: #374151; margin-bottom: 15px;">What's Next?</h3>
+                <ul style="text-align: left; color: #6b7280; line-height: 1.8;">
+                    <li>Check your email for account activation instructions</li>
+                    <li>Set up your business profile</li>
+                    <li>Configure your communication preferences</li>
+                    <li>Start managing your customer relationships</li>
+                </ul>
             </div>
         </div>
     </div>
 
     <script>
-        // Demo user credentials
-        const demoCredentials = {
-            email: 'demo@quickport.co.in',
-            password: 'demo123'
-        };
+        // ViaSocket webhook URL
+        const VIASOCKET_WEBHOOK = 'https://flow.sokt.io/func/scriwLxBcjc';
+        
+        let emailVerified = false;
+        let generatedOTP = '';
 
-        // ViaSocket webhook URL (replace with your actual webhook)
-        const VIASOCKET_WEBHOOK = https://flow.sokt.io/func/scriwLxBcjc;
+        // Generate 6-digit OTP
+        function generateOTP() {
+            return Math.floor(100000 + Math.random() * 900000).toString();
+        }
 
-        document.getElementById('loginForm').addEventListener('submit', async function(e) {
-            e.preventDefault();
-            
+        // Email verification functionality
+        document.getElementById('verifyEmailBtn').addEventListener('click', async function() {
             const email = document.getElementById('email').value;
-            const password = document.getElementById('password').value;
+            const businessName = document.getElementById('businessName').value;
             
-            // Validate credentials
-            if (email === demoCredentials.email && password === demoCredentials.password) {
-                // Show dashboard
-                document.getElementById('loginSection').style.display = 'none';
-                document.getElementById('dashboardSection').style.display = 'block';
+            if (!email) {
+                showVerificationStatus('Please enter an email address', 'error');
+                return;
+            }
+            
+            if (!businessName) {
+                showVerificationStatus('Please enter business name first', 'error');
+                return;
+            }
+
+            // Disable button and show pending
+            this.disabled = true;
+            this.textContent = 'Verifying...';
+            showVerificationStatus('Sending verification email...', 'pending');
+
+            try {
+                // Generate OTP
+                generatedOTP = generateOTP();
                 
-                // Set user name
-                document.getElementById('userName').textContent = email;
-                
-                // Trigger welcome email
-                await sendWelcomeEmail(email);
-                
-                // Update email count
-                updateEmailCount();
-                
-            } else {
-                alert('Invalid credentials! Please use demo@quickport.co.in / demo123');
+                // Send verification email via ViaSocket webhook
+                const response = await fetch(VIASOCKET_WEBHOOK, {
+                    method: 'POST',
+                    headers: {
+                        'Content-Type': 'application/json',
+                    },
+                    body: JSON.stringify({
+                        action: 'email_verification',
+                        email: email,
+                        businessName: businessName,
+                        otp: generatedOTP,
+                        timestamp: new Date().toISOString()
+                    })
+                });
+
+                if (response.ok) {
+                    emailVerified = true;
+                    this.textContent = 'Verified ✓';
+                    this.style.background = '#10b981';
+                    showVerificationStatus('Verification email sent! Check your inbox.', 'success');
+                    
+                    // Enable signup button
+                    document.getElementById('signupBtn').disabled = false;
+                    
+                    // Show OTP prompt
+                    setTimeout(() => {
+                        const enteredOTP = prompt('Please enter the 6-digit verification code sent to your email:');
+                        if (enteredOTP === generatedOTP) {
+                            showVerificationStatus('Email verified successfully!', 'success');
+                        } else {
+                            showVerificationStatus('Invalid verification code. Please try again.', 'error');
+                            emailVerified = false;
+                            document.getElementById('signupBtn').disabled = true;
+                            this.disabled = false;
+                            this.textContent = 'Verify Email';
+                            this.style.background = '';
+                        }
+                    }, 2000);
+                    
+                } else {
+                    throw new Error('Verification failed');
+                }
+            } catch (error) {
+                console.error('Email verification error:', error);
+                this.disabled = false;
+                this.textContent = 'Verify Email';
+                showVerificationStatus('Verification failed. Please try again.', 'error');
             }
         });
 
-        async function sendWelcomeEmail(email) {
-            const emailData = {
-                name: 'Demo User',
-                email: email,
-                loginTime: new Date().toLocaleString(),
-                action: 'welcome_email'
+        // Business signup form submission
+        document.getElementById('businessSignupForm').addEventListener('submit', async function(e) {
+            e.preventDefault();
+            
+            if (!emailVerified) {
+                showVerificationStatus('Please verify your email address first', 'error');
+                return;
+            }
+            
+            const formData = {
+                businessName: document.getElementById('businessName').value,
+                phoneNumber: document.getElementById('phoneNumber').value,
+                email: document.getElementById('email').value,
+                action: 'business_registration',
+                timestamp: new Date().toISOString()
             };
 
             try {
-                // In production, this would call your ViaSocket webhook
-                console.log('Sending welcome email via ViaSocket:', emailData);
-                
-                // Simulate API call
-                await new Promise(resolve => setTimeout(resolve, 1000));
-                
-                // Add email status to the list
-                addEmailStatus('Welcome Email Sent', 'success', email);
-                
-                // Show success message
-                setTimeout(() => {
-                    alert('Welcome email sent successfully to ' + email);
-                }, 1500);
-                
+                const signupBtn = document.getElementById('signupBtn');
+                signupBtn.disabled = true;
+                signupBtn.textContent = 'Registering...';
+
+                // Send registration data to ViaSocket
+                const response = await fetch(VIASOCKET_WEBHOOK, {
+                    method: 'POST',
+                    headers: {
+                        'Content-Type': 'application/json',
+                    },
+                    body: JSON.stringify(formData)
+                });
+
+                if (response.ok) {
+                    // Show success message
+                    document.getElementById('signupSection').style.display = 'none';
+                    document.getElementById('successSection').style.display = 'block';
+                } else {
+                    throw new Error('Registration failed');
+                }
             } catch (error) {
-                console.error('Error sending email:', error);
-                addEmailStatus('Welcome Email Failed', 'pending', email);
+                console.error('Registration error:', error);
+                alert('Registration failed. Please try again.');
+                document.getElementById('signupBtn').disabled = false;
+                document.getElementById('signupBtn').textContent = 'Complete Registration';
+            }
+        });
+
+        function showVerificationStatus(message, type) {
+            const statusDiv = document.getElementById('verificationStatus');
+            statusDiv.textContent = message;
+            statusDiv.className = `verification-status status-${type}`;
+            statusDiv.style.display = 'block';
+            
+            if (type === 'success') {
+                setTimeout(() => {
+                    statusDiv.style.display = 'none';
+                }, 5000);
             }
         }
 
-        function addEmailStatus(message, status, recipient) {
-            const statusList = document.getElementById('emailStatusList');
-            const statusItem = document.createElement('div');
-            statusItem.className = 'status-item';
-            statusItem.innerHTML = `
-                <span>${message} to ${recipient}</span>
-                <span class="status-badge status-${status}">${status === 'success' ? 'Delivered' : 'Pending'}</span>
-            `;
-            statusList.appendChild(statusItem);
-        }
-
-        function updateEmailCount() {
-            const currentCount = parseInt(document.getElementById('emailCount').textContent);
-            document.getElementById('emailCount').textContent = currentCount + 1;
-        }
-
-        function logout() {
-            document.getElementById('loginSection').style.display = 'flex';
-            document.getElementById('dashboardSection').style.display = 'none';
-            
-            // Reset form
-            document.getElementById('email').value = 'sngunjal@gmail.com';
-            document.getElementById('password').value = 'demo123';
-            
-            // Clear email status (keep system status)
-            const statusList = document.getElementById('emailStatusList');
-            const systemItems = statusList.querySelectorAll('.status-item');
-            // Keep first 3 items (system status), remove email notifications
-            while (statusList.children.length > 3) {
-                statusList.removeChild(statusList.lastChild);
+        // Enable signup button only after email verification
+        document.getElementById('email').addEventListener('input', function() {
+            if (this.value !== document.getElementById('verifyEmailBtn').dataset.verifiedEmail) {
+                emailVerified = false;
+                document.getElementById('signupBtn').disabled = true;
+                document.getElementById('verifyEmailBtn').disabled = false;
+                document.getElementById('verifyEmailBtn').textContent = 'Verify Email';
+                document.getElementById('verifyEmailBtn').style.background = '';
+                document.getElementById('verificationStatus').style.display = 'none';
             }
-        }
+        });
 
-        // Integration Instructions (for production deployment)
         console.log(`
-        🚀 ViaSocket Integration Setup:
+        🚀 ViaSocket Integration Configuration:
         
-        1. Replace VIASOCKET_WEBHOOK variable with your actual webhook URL
-        2. Configure MSG91 email action in ViaSocket workflow
-        3. Map the following data fields:
-           - name: {{trigger.name}}
-           - email: {{trigger.email}}
-           - loginTime: {{trigger.loginTime}}
-           - action: {{trigger.action}}
+        For Email Verification (Step 1):
+        Webhook Data: {
+            "action": "email_verification",
+            "email": "customer_email",
+            "businessName": "customer_business_name", 
+            "otp": "6_digit_code",
+            "timestamp": "iso_timestamp"
+        }
         
-        4. Email template for welcome message:
-           Subject: Welcome to Quickport CRM - {{name}}
-           Body: 
-           Dear {{name}},
-           
-           Welcome to Quickport CRM! Your account login was successful at {{loginTime}}.
-           
-           Your CRM dashboard is now ready for:
-           • Managing customer appointments
-           • Automated email notifications
-           • Real-time business analytics
-           
-           Best regards,
-           Quickport CRM Team
-           
-           Email: crm@quickport.co.in
-           Website: www.quickport.co.in
+        MSG91 API Call:
+        URL: https://control.msg91.com/api/v5/email/send
+        Headers: {
+            "Content-Type": "application/json",
+            "authkey": "466767AyQse2oIL868bc55d5P1"
+        }
+        Body: {
+            "recipients": [{
+                "to": [{"email": "{{trigger.email}}", "name": "{{trigger.businessName}}"}],
+                "variables": {
+                    "company_name": "{{trigger.businessName}}",
+                    "otp": "{{trigger.otp}}"
+                }
+            }],
+            "from": {"email": "crm@quickport.co.in"},
+            "domain": "quickport.co.in", 
+            "template_id": "global_otp"
+        }
+        
+        For Business Registration (Step 2):
+        Similar structure but with action: "business_registration"
         `);
     </script>
 </body>
