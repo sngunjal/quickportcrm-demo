@@ -381,14 +381,26 @@
                 // Generate OTP
                 generatedOTP = generateOTP();
                 
-                // CORRECTED: Send verification email via ViaSocket webhook
+                // IMPROVED: Send verification email via ViaSocket webhook with nested structure
                 const emailVerificationData = {
                     action: 'email_verification',
                     email: email,
                     businessName: businessName,
                     otp: generatedOTP,
                     timestamp: new Date().toISOString(),
-                    source: 'quickport_registration_form'
+                    source: 'quickport_registration_form',
+                    // Additional nested structure for ViaSocket mapping
+                    recipient: {
+                        email: email,
+                        name: businessName
+                    },
+                    template: {
+                        id: 'mail_welcome_custome1',
+                        variables: {
+                            VAR1: businessName,
+                            VAR2: generatedOTP
+                        }
+                    }
                 };
 
                 addDebugLog('Sending to ViaSocket webhook', emailVerificationData);
@@ -576,18 +588,22 @@
             "source": "quickport_registration_form"
         }
         
-        ViaSocket MSG91 Email JSON Configuration:
+        ✅ FINAL CORRECTED ViaSocket MSG91 Email JSON Configuration:
         {
             "recipients": [{
-                "to": [{"email": "{{email}}", "name": "{{businessName}}"}],
+                "to": [{"email": "{{trigger.email}}", "name": "{{trigger.businessName}}"}],
                 "variables": {
-                    "VAR1": "{{businessName}}"
+                    "VAR1": "{{trigger.businessName}}"
                 }
             }],
             "from": {"email": "no-reply@mail.quickport.co.in"},
-            "domain": "mail.quickport.co.in",
+            "domain": "mail.quickport.co.in", 
             "template_id": "mail_welcome_custome1"
         }
+        
+        📋 ViaSocket MSG91 Action Headers Required:
+        Content-Type: application/json
+        authkey: YOUR_MSG91_AUTH_KEY
         `);
     </script>
 </body>
