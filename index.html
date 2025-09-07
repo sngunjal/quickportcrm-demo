@@ -211,6 +211,18 @@
             border: 1px solid #fde68a;
         }
 
+        .debug-info {
+            background: #f3f4f6;
+            padding: 15px;
+            border-radius: 8px;
+            margin-top: 20px;
+            font-family: monospace;
+            font-size: 12px;
+            color: #6b7280;
+            max-height: 200px;
+            overflow-y: auto;
+        }
+
         @media (max-width: 768px) {
             .signup-container {
                 flex-direction: column;
@@ -274,6 +286,13 @@
                     
                     <button type="submit" id="signupBtn" class="btn" disabled>Complete Registration</button>
                 </form>
+
+                <!-- Debug Information -->
+                <div id="debugInfo" class="debug-info" style="display: none;">
+                    <strong>Debug Information:</strong><br>
+                    <div id="debugContent">Ready for testing...</div>
+                </div>
+                <button type="button" onclick="toggleDebug()" style="margin-top: 10px; padding: 5px 10px; background: #6b7280; color: white; border: none; border-radius: 5px; font-size: 12px;">Toggle Debug</button>
             </div>
         </div>
 
@@ -297,29 +316,59 @@
     </div>
 
     <script>
-        // ViaSocket webhook URL
+        // ViaSocket webhook URL - REPLACE WITH YOUR ACTUAL WEBHOOK URL
         const VIASOCKET_WEBHOOK = 'https://flow.sokt.io/func/scricWLxBcjc';
         
         let emailVerified = false;
         let generatedOTP = '';
+
+        // Debug logging function
+        function addDebugLog(message, data = null) {
+            const debugContent = document.getElementById('debugContent');
+            const timestamp = new Date().toLocaleTimeString();
+            const logEntry = `[${timestamp}] ${message}${data ? '\n' + JSON.stringify(data, null, 2) : ''}\n\n`;
+            debugContent.textContent = logEntry + debugContent.textContent;
+            console.log(message, data);
+        }
+
+        function toggleDebug() {
+            const debugInfo = document.getElementById('debugInfo');
+            debugInfo.style.display = debugInfo.style.display === 'none' ? 'block' : 'none';
+        }
 
         // Generate 6-digit OTP
         function generateOTP() {
             return Math.floor(100000 + Math.random() * 900000).toString();
         }
 
+        // Email validation function
+        function isValidEmail(email) {
+            const emailRegex = /^[^\s@]+@[^\s@]+\.[^\s@]+$/;
+            return emailRegex.test(email.trim());
+        }
+
         // Email verification functionality
         document.getElementById('verifyEmailBtn').addEventListener('click', async function() {
-            const email = document.getElementById('email').value;
-            const businessName = document.getElementById('businessName').value;
+            const email = document.getElementById('email').value.trim().toLowerCase();
+            const businessName = document.getElementById('businessName').value.trim();
+            
+            addDebugLog('Email verification started', { email, businessName });
             
             if (!email) {
                 showVerificationStatus('Please enter an email address', 'error');
+                addDebugLog('Validation failed: Empty email');
+                return;
+            }
+            
+            if (!isValidEmail(email)) {
+                showVerificationStatus('Please enter a valid email address', 'error');
+                addDebugLog('Validation failed: Invalid email format', { email });
                 return;
             }
             
             if (!businessName) {
                 showVerificationStatus('Please enter business name first', 'error');
+                addDebugLog('Validation failed: Empty business name');
                 return;
             }
 
@@ -332,30 +381,42 @@
                 // Generate OTP
                 generatedOTP = generateOTP();
                 
-                // Send verification email via ViaSocket webhook - CORRECTED STRUCTURE
+                // CORRECTED: Send verification email via ViaSocket webhook
                 const emailVerificationData = {
                     action: 'email_verification',
                     email: email,
                     businessName: businessName,
                     otp: generatedOTP,
-                    timestamp: new Date().toISOString()
+                    timestamp: new Date().toISOString(),
+                    source: 'quickport_registration_form'
                 };
 
-                console.log('Sending email verification data:', emailVerificationData);
+                addDebugLog('Sending to ViaSocket webhook', emailVerificationData);
 
                 const response = await fetch(VIASOCKET_WEBHOOK, {
                     method: 'POST',
                     headers: {
                         'Content-Type': 'application/json',
+                        'Accept': 'application/json'
                     },
                     body: JSON.stringify(emailVerificationData)
                 });
+
+                addDebugLog('ViaSocket response status', { 
+                    status: response.status, 
+                    statusText: response.statusText,
+                    ok: response.ok 
+                });
+
+                const responseData = await response.text();
+                addDebugLog('ViaSocket response body', responseData);
 
                 if (response.ok) {
                     emailVerified = true;
                     this.textContent = 'Verified ✓';
                     this.style.background = '#10b981';
                     showVerificationStatus('Verification email sent! Check your inbox.', 'success');
+                    addDebugLog('Email verification successful');
                     
                     // Enable signup button
                     document.getElementById('signupBtn').disabled = false;
@@ -365,8 +426,10 @@
                         const enteredOTP = prompt('Please enter the 6-digit verification code sent to your email:');
                         if (enteredOTP === generatedOTP) {
                             showVerificationStatus('Email verified successfully!', 'success');
+                            addDebugLog('OTP verification successful');
                         } else if (enteredOTP !== null) { // User didn't cancel
                             showVerificationStatus('Invalid verification code. Please try again.', 'error');
+                            addDebugLog('OTP verification failed', { entered: enteredOTP, expected: generatedOTP });
                             emailVerified = false;
                             document.getElementById('signupBtn').disabled = true;
                             this.disabled = false;
@@ -376,10 +439,13 @@
                     }, 3000);
                     
                 } else {
-                    throw new Error('Verification failed');
+                    throw new Error(`HTTP ${response.status}: ${responseData}`);
                 }
             } catch (error) {
-                console.error('Email verification error:', error);
+                addDebugLog('Email verification error', { 
+                    message: error.message,
+                    stack: error.stack 
+                });
                 this.disabled = false;
                 this.textContent = 'Verify Email';
                 showVerificationStatus('Verification failed. Please try again.', 'error');
@@ -392,19 +458,25 @@
             
             if (!emailVerified) {
                 showVerificationStatus('Please verify your email address first', 'error');
+                addDebugLog('Registration failed: Email not verified');
                 return;
             }
             
-            // CORRECTED REGISTRATION DATA STRUCTURE
+            const email = document.getElementById('email').value.trim().toLowerCase();
+            const businessName = document.getElementById('businessName').value.trim();
+            const phoneNumber = document.getElementById('phoneNumber').value.trim();
+            
+            // CORRECTED: Registration data structure for ViaSocket
             const registrationData = {
                 action: 'business_registration',
-                email: document.getElementById('email').value,
-                businessName: document.getElementById('businessName').value,
-                phoneNumber: document.getElementById('phoneNumber').value,
-                timestamp: new Date().toISOString()
+                email: email,
+                businessName: businessName,
+                phoneNumber: phoneNumber,
+                timestamp: new Date().toISOString(),
+                source: 'quickport_registration_form'
             };
 
-            console.log('Sending registration data:', registrationData);
+            addDebugLog('Sending registration data to ViaSocket', registrationData);
 
             try {
                 const signupBtn = document.getElementById('signupBtn');
@@ -416,19 +488,33 @@
                     method: 'POST',
                     headers: {
                         'Content-Type': 'application/json',
+                        'Accept': 'application/json'
                     },
                     body: JSON.stringify(registrationData)
                 });
 
+                addDebugLog('Registration response status', { 
+                    status: response.status, 
+                    statusText: response.statusText,
+                    ok: response.ok 
+                });
+
+                const responseData = await response.text();
+                addDebugLog('Registration response body', responseData);
+
                 if (response.ok) {
+                    addDebugLog('Registration successful');
                     // Show success message
                     document.getElementById('signupSection').style.display = 'none';
                     document.getElementById('successSection').style.display = 'block';
                 } else {
-                    throw new Error('Registration failed');
+                    throw new Error(`HTTP ${response.status}: ${responseData}`);
                 }
             } catch (error) {
-                console.error('Registration error:', error);
+                addDebugLog('Registration error', { 
+                    message: error.message,
+                    stack: error.stack 
+                });
                 alert('Registration failed. Please try again.');
                 document.getElementById('signupBtn').disabled = false;
                 document.getElementById('signupBtn').textContent = 'Complete Registration';
@@ -458,28 +544,49 @@
             document.getElementById('verificationStatus').style.display = 'none';
         });
 
-        // Debug logging for development
+        // Initialize debug logging
+        addDebugLog('Quickport CRM Registration Form Initialized', {
+            webhookUrl: VIASOCKET_WEBHOOK,
+            timestamp: new Date().toISOString()
+        });
+
+        // ViaSocket Integration Debug Information
         console.log(`
         🚀 ViaSocket Integration Ready
         
         Webhook URL: ${VIASOCKET_WEBHOOK}
         
-        Email Verification Payload:
+        CORRECTED Email Verification Payload Structure:
         {
             "action": "email_verification",
             "email": "user_email",
-            "businessName": "business_name",
+            "businessName": "business_name", 
             "otp": "6_digit_code",
-            "timestamp": "iso_string"
+            "timestamp": "iso_string",
+            "source": "quickport_registration_form"
         }
         
-        Business Registration Payload:
+        CORRECTED Business Registration Payload Structure:
         {
-            "action": "business_registration", 
+            "action": "business_registration",
             "email": "user_email",
             "businessName": "business_name",
-            "phoneNumber": "phone_number",
-            "timestamp": "iso_string"
+            "phoneNumber": "phone_number", 
+            "timestamp": "iso_string",
+            "source": "quickport_registration_form"
+        }
+        
+        ViaSocket MSG91 Email JSON Configuration:
+        {
+            "recipients": [{
+                "to": [{"email": "{{email}}", "name": "{{businessName}}"}],
+                "variables": {
+                    "VAR1": "{{businessName}}"
+                }
+            }],
+            "from": {"email": "no-reply@mail.quickport.co.in"},
+            "domain": "mail.quickport.co.in",
+            "template_id": "mail_welcome_custome1"
         }
         `);
     </script>
