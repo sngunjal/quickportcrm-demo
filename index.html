@@ -282,12 +282,12 @@
             <div class="success-icon">✅</div>
             <h2 style="color: #1f2937; margin-bottom: 20px;">Registration Successful!</h2>
             <p style="color: #6b7280; margin-bottom: 30px;">
-                Welcome to Quickport CRM! We've sent you a verification email with your account details.
+                Welcome to Quickport CRM! We've sent you a confirmation email with your account details.
             </p>
             <div style="background: #f3f4f6; padding: 20px; border-radius: 10px; margin: 20px 0;">
                 <h3 style="color: #374151; margin-bottom: 15px;">What's Next?</h3>
                 <ul style="text-align: left; color: #6b7280; line-height: 1.8;">
-                    <li>Check your email for account activation instructions</li>
+                    <li>Check your email for account confirmation</li>
                     <li>Set up your business profile</li>
                     <li>Configure your communication preferences</li>
                     <li>Start managing your customer relationships</li>
@@ -332,19 +332,23 @@
                 // Generate OTP
                 generatedOTP = generateOTP();
                 
-                // Send verification email via ViaSocket webhook
+                // Send verification email via ViaSocket webhook - CORRECTED STRUCTURE
+                const emailVerificationData = {
+                    action: 'email_verification',
+                    email: email,
+                    businessName: businessName,
+                    otp: generatedOTP,
+                    timestamp: new Date().toISOString()
+                };
+
+                console.log('Sending email verification data:', emailVerificationData);
+
                 const response = await fetch(VIASOCKET_WEBHOOK, {
                     method: 'POST',
                     headers: {
                         'Content-Type': 'application/json',
                     },
-                    body: JSON.stringify({
-                        action: 'email_verification',
-                        email: email,
-                        businessName: businessName,
-                        otp: generatedOTP,
-                        timestamp: new Date().toISOString()
-                    })
+                    body: JSON.stringify(emailVerificationData)
                 });
 
                 if (response.ok) {
@@ -361,7 +365,7 @@
                         const enteredOTP = prompt('Please enter the 6-digit verification code sent to your email:');
                         if (enteredOTP === generatedOTP) {
                             showVerificationStatus('Email verified successfully!', 'success');
-                        } else {
+                        } else if (enteredOTP !== null) { // User didn't cancel
                             showVerificationStatus('Invalid verification code. Please try again.', 'error');
                             emailVerified = false;
                             document.getElementById('signupBtn').disabled = true;
@@ -369,7 +373,7 @@
                             this.textContent = 'Verify Email';
                             this.style.background = '';
                         }
-                    }, 2000);
+                    }, 3000);
                     
                 } else {
                     throw new Error('Verification failed');
@@ -391,13 +395,16 @@
                 return;
             }
             
-            const formData = {
+            // CORRECTED REGISTRATION DATA STRUCTURE
+            const registrationData = {
+                action: 'business_registration',
+                email: document.getElementById('email').value,
                 businessName: document.getElementById('businessName').value,
                 phoneNumber: document.getElementById('phoneNumber').value,
-                email: document.getElementById('email').value,
-                action: 'business_registration',
                 timestamp: new Date().toISOString()
             };
+
+            console.log('Sending registration data:', registrationData);
 
             try {
                 const signupBtn = document.getElementById('signupBtn');
@@ -410,7 +417,7 @@
                     headers: {
                         'Content-Type': 'application/json',
                     },
-                    body: JSON.stringify(formData)
+                    body: JSON.stringify(registrationData)
                 });
 
                 if (response.ok) {
@@ -443,49 +450,37 @@
 
         // Enable signup button only after email verification
         document.getElementById('email').addEventListener('input', function() {
-            if (this.value !== document.getElementById('verifyEmailBtn').dataset.verifiedEmail) {
-                emailVerified = false;
-                document.getElementById('signupBtn').disabled = true;
-                document.getElementById('verifyEmailBtn').disabled = false;
-                document.getElementById('verifyEmailBtn').textContent = 'Verify Email';
-                document.getElementById('verifyEmailBtn').style.background = '';
-                document.getElementById('verificationStatus').style.display = 'none';
-            }
+            emailVerified = false;
+            document.getElementById('signupBtn').disabled = true;
+            document.getElementById('verifyEmailBtn').disabled = false;
+            document.getElementById('verifyEmailBtn').textContent = 'Verify Email';
+            document.getElementById('verifyEmailBtn').style.background = '';
+            document.getElementById('verificationStatus').style.display = 'none';
         });
 
+        // Debug logging for development
         console.log(`
-        🚀 ViaSocket Integration Configuration:
+        🚀 ViaSocket Integration Ready
         
-        For Email Verification (Step 1):
-        Webhook Data: {
+        Webhook URL: ${VIASOCKET_WEBHOOK}
+        
+        Email Verification Payload:
+        {
             "action": "email_verification",
-            "email": "customer_email",
-            "businessName": "customer_business_name", 
+            "email": "user_email",
+            "businessName": "business_name",
             "otp": "6_digit_code",
-            "timestamp": "iso_timestamp"
+            "timestamp": "iso_string"
         }
         
-        MSG91 API Call:
-        URL: https://control.msg91.com/api/v5/email/send
-        Headers: {
-            "Content-Type": "application/json",
-            "authkey": "466767AyQse2oIL868bc55d5P1"
+        Business Registration Payload:
+        {
+            "action": "business_registration", 
+            "email": "user_email",
+            "businessName": "business_name",
+            "phoneNumber": "phone_number",
+            "timestamp": "iso_string"
         }
-        Body: {
-            "recipients": [{
-                "to": [{"email": "{{trigger.email}}", "name": "{{trigger.businessName}}"}],
-                "variables": {
-                    "company_name": "{{trigger.businessName}}",
-                    "otp": "{{trigger.otp}}"
-                }
-            }],
-            "from": {"email": "crm@quickport.co.in"},
-            "domain": "quickport.co.in", 
-            "template_id": "global_otp"
-        }
-        
-        For Business Registration (Step 2):
-        Similar structure but with action: "business_registration"
         `);
     </script>
 </body>
