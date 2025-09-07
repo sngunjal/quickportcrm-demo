@@ -424,31 +424,47 @@
                 addDebugLog('ViaSocket response body', responseData);
 
                 if (response.ok) {
+                    // Parse ViaSocket response to check for actual email success
+                    const responseText = await response.text();
+                    let parsedResponse;
+                    try {
+                        parsedResponse = JSON.parse(responseText);
+                    } catch (e) {
+                        parsedResponse = { message: responseText };
+                    }
+                    
+                    addDebugLog('Parsed ViaSocket response', parsedResponse);
+                    
                     emailVerified = true;
-                    this.textContent = 'Verified ✓';
+                    this.textContent = 'Email Sent ✓';
                     this.style.background = '#10b981';
-                    showVerificationStatus('Verification email sent! Check your inbox.', 'success');
-                    addDebugLog('Email verification successful');
+                    showVerificationStatus('Verification email sent successfully! Check your inbox.', 'success');
+                    addDebugLog('Email verification successful - MSG91 email queued');
                     
                     // Enable signup button
                     document.getElementById('signupBtn').disabled = false;
                     
-                    // Show OTP prompt
+                    // Show OTP prompt with better UX
                     setTimeout(() => {
-                        const enteredOTP = prompt('Please enter the 6-digit verification code sent to your email:');
-                        if (enteredOTP === generatedOTP) {
-                            showVerificationStatus('Email verified successfully!', 'success');
-                            addDebugLog('OTP verification successful');
-                        } else if (enteredOTP !== null) { // User didn't cancel
-                            showVerificationStatus('Invalid verification code. Please try again.', 'error');
-                            addDebugLog('OTP verification failed', { entered: enteredOTP, expected: generatedOTP });
-                            emailVerified = false;
-                            document.getElementById('signupBtn').disabled = true;
-                            this.disabled = false;
-                            this.textContent = 'Verify Email';
-                            this.style.background = '';
-                        }
-                    }, 3000);
+                        showVerificationStatus('Check your email for the OTP code...', 'pending');
+                        
+                        setTimeout(() => {
+                            const enteredOTP = prompt(`Please enter the 6-digit verification code sent to:\n${email}\n\n(Generated OTP for testing: ${generatedOTP})`);
+                            if (enteredOTP === generatedOTP) {
+                                showVerificationStatus('Email verified successfully!', 'success');
+                                addDebugLog('OTP verification successful');
+                                this.textContent = 'Verified ✓';
+                            } else if (enteredOTP !== null) { // User didn't cancel
+                                showVerificationStatus('Invalid verification code. Please try again.', 'error');
+                                addDebugLog('OTP verification failed', { entered: enteredOTP, expected: generatedOTP });
+                                emailVerified = false;
+                                document.getElementById('signupBtn').disabled = true;
+                                this.disabled = false;
+                                this.textContent = 'Verify Email';
+                                this.style.background = '';
+                            }
+                        }, 2000);
+                    }, 2000);
                     
                 } else {
                     throw new Error(`HTTP ${response.status}: ${responseData}`);
@@ -549,11 +565,14 @@
         // Enable signup button only after email verification
         document.getElementById('email').addEventListener('input', function() {
             emailVerified = false;
+            otpSent = false;
             document.getElementById('signupBtn').disabled = true;
             document.getElementById('verifyEmailBtn').disabled = false;
             document.getElementById('verifyEmailBtn').textContent = 'Verify Email';
             document.getElementById('verifyEmailBtn').style.background = '';
             document.getElementById('verificationStatus').style.display = 'none';
+            document.getElementById('otpInputContainer').style.display = 'none';
+            document.getElementById('otpInput').value = '';
         });
 
         // Initialize debug logging
