@@ -472,6 +472,12 @@
                     body: JSON.stringify(emailVerificationData)
                 });
 
+        // Initialize
+        addDebugLog('Quickport CRM Registration Form Initialized', {
+            webhookUrl: VIASOCKET_WEBHOOK,
+            timestamp: new Date().toISOString()
+        });
+
                 addDebugLog('ViaSocket response received', { 
                     status: response.status, 
                     ok: response.ok 
