@@ -97,7 +97,7 @@
             color: #374151;
         }
 
-        .form-group input {
+        .form-group input, .form-group select {
             width: 100%;
             padding: 15px;
             border: 2px solid #e5e7eb;
@@ -106,7 +106,7 @@
             transition: all 0.3s ease;
         }
 
-        .form-group input:focus {
+        .form-group input:focus, .form-group select:focus {
             outline: none;
             border-color: #4f46e5;
             box-shadow: 0 0 0 3px rgba(79, 70, 229, 0.1);
@@ -119,6 +119,22 @@
         }
 
         .email-input {
+            flex: 1;
+        }
+
+        /* Phone Number Layout */
+        .phone-layout {
+            display: flex;
+            gap: 10px;
+            align-items: stretch;
+        }
+
+        .country-dropdown {
+            width: 180px;
+            flex-shrink: 0;
+        }
+
+        .phone-input-section {
             flex: 1;
         }
 
@@ -259,13 +275,18 @@
                 padding: 40px;
             }
             
-            .email-group {
+            .email-group, .phone-layout {
                 flex-direction: column;
                 align-items: stretch;
             }
             
             .verify-btn {
                 margin-top: 10px;
+            }
+            
+            .country-dropdown {
+                width: 100%;
+                margin-bottom: 10px;
             }
         }
     </style>
@@ -295,8 +316,27 @@
                     </div>
                     
                     <div class="form-group">
-                        <label for="phoneNumber">Phone Number *</label>
-                        <input type="tel" id="phoneNumber" name="phoneNumber" required placeholder="+91 XXXXXXXXXX">
+                        <label>Phone Number *</label>
+                        <div class="phone-layout">
+                            <div class="country-dropdown">
+                                <select id="countryCode">
+                                    <option value="+91" data-digits="10" data-pattern="[6-9]">🇮🇳 +91 India</option>
+                                    <option value="+1" data-digits="10" data-pattern="[2-9]">🇺🇸 +1 USA</option>
+                                    <option value="+44" data-digits="10" data-pattern="[1-9]">🇬🇧 +44 UK</option>
+                                    <option value="+86" data-digits="11" data-pattern="[1-9]">🇨🇳 +86 China</option>
+                                    <option value="+81" data-digits="10" data-pattern="[1-9]">🇯🇵 +81 Japan</option>
+                                    <option value="+49" data-digits="11" data-pattern="[1-9]">🇩🇪 +49 Germany</option>
+                                    <option value="+33" data-digits="9" data-pattern="[1-9]">🇫🇷 +33 France</option>
+                                    <option value="+61" data-digits="9" data-pattern="[4-5]">🇦🇺 +61 Australia</option>
+                                    <option value="+65" data-digits="8" data-pattern="[6-9]">🇸🇬 +65 Singapore</option>
+                                    <option value="+971" data-digits="9" data-pattern="[5]">🇦🇪 +971 UAE</option>
+                                </select>
+                            </div>
+                            <div class="phone-input-section">
+                                <input type="tel" id="phoneNumber" name="phoneNumber" required placeholder="Enter 10 digits" maxlength="10">
+                                <div id="phoneValidationStatus" class="verification-status"></div>
+                            </div>
+                        </div>
                     </div>
                     
                     <div class="form-group">
@@ -353,6 +393,7 @@
         let emailVerified = false;
         let generatedOTP = '';
         let otpSent = false;
+        let currentCountryConfig = { code: '+91', digits: 10, pattern: '[6-9]', name: 'India' };
 
         // Debug logging function
         function addDebugLog(message, data = null) {
@@ -379,6 +420,69 @@
             return emailRegex.test(email.trim());
         }
 
+        // Country-specific phone validation
+        function validatePhoneByCountry(phoneNumber, countryConfig) {
+            const cleanPhone = phoneNumber.replace(/[\s\-\(\)]/g, '');
+            
+            if (!/^\d+$/.test(cleanPhone)) {
+                return { valid: false, message: 'Only numbers allowed' };
+            }
+            
+            if (cleanPhone.length > countryConfig.digits) {
+                return { valid: false, message: `Too long! ${countryConfig.name} needs exactly ${countryConfig.digits} digits` };
+            }
+            
+            if (cleanPhone.length < countryConfig.digits) {
+                return { valid: false, message: `Need ${countryConfig.digits - cleanPhone.length} more digits` };
+            }
+            
+            const firstDigit = cleanPhone[0];
+            const pattern = new RegExp(countryConfig.pattern);
+            
+            if (!pattern.test(firstDigit)) {
+                let patternDesc = '';
+                switch(countryConfig.code) {
+                    case '+91': patternDesc = 'Indian mobile numbers start with 6, 7, 8, or 9'; break;
+                    case '+1': patternDesc = 'US numbers cannot start with 0 or 1'; break;
+                    case '+44': patternDesc = 'UK numbers cannot start with 0'; break;
+                    case '+65': patternDesc = 'Singapore mobile numbers start with 6, 7, 8, or 9'; break;
+                    case '+971': patternDesc = 'UAE mobile numbers start with 5'; break;
+                    default: patternDesc = `Invalid first digit for ${countryConfig.name}`;
+                }
+                return { valid: false, message: patternDesc };
+            }
+            
+            return { valid: true, message: `Valid ${countryConfig.name} number!` };
+        }
+
+        // Show phone validation status
+        function showPhoneValidationStatus(message, type) {
+            const statusDiv = document.getElementById('phoneValidationStatus');
+            statusDiv.textContent = message;
+            statusDiv.className = `verification-status status-${type}`;
+            statusDiv.style.display = 'block';
+            
+            if (type === 'success') {
+                setTimeout(() => {
+                    statusDiv.style.display = 'none';
+                }, 3000);
+            }
+        }
+
+        // Show email verification status
+        function showVerificationStatus(message, type) {
+            const statusDiv = document.getElementById('verificationStatus');
+            statusDiv.textContent = message;
+            statusDiv.className = `verification-status status-${type}`;
+            statusDiv.style.display = 'block';
+            
+            if (type === 'success') {
+                setTimeout(() => {
+                    statusDiv.style.display = 'none';
+                }, 5000);
+            }
+        }
+
         // OTP validation function
         function validateOTP(enteredOTP) {
             const verifyBtn = document.getElementById('verifyEmailBtn');
@@ -393,7 +497,7 @@
                 // Enable signup button
                 document.getElementById('signupBtn').disabled = false;
                 
-                // Hide OTP container and show success
+                // Hide OTP container
                 document.getElementById('otpInputContainer').style.display = 'none';
                 
             } else {
@@ -406,12 +510,86 @@
             }
         }
 
-        // Email verification functionality - COMPLETELY REWRITTEN
+        // Initialize phone validation system
+        function initializePhoneValidation() {
+            const countrySelect = document.getElementById('countryCode');
+            const phoneInput = document.getElementById('phoneNumber');
+            
+            // Update country configuration when dropdown changes
+            countrySelect.addEventListener('change', function() {
+                const selectedOption = this.selectedOptions[0];
+                currentCountryConfig = {
+                    code: selectedOption.value,
+                    digits: parseInt(selectedOption.dataset.digits),
+                    pattern: selectedOption.dataset.pattern,
+                    name: selectedOption.textContent.split(' ')[2] // Extract country name
+                };
+                
+                phoneInput.maxLength = currentCountryConfig.digits;
+                phoneInput.placeholder = `Enter ${currentCountryConfig.digits} digits`;
+                
+                document.getElementById('phoneValidationStatus').style.display = 'none';
+                
+                if (phoneInput.value.trim()) {
+                    validateCurrentPhone();
+                }
+                
+                addDebugLog('Country changed to:', currentCountryConfig);
+            });
+            
+            // Real-time phone validation
+            phoneInput.addEventListener('input', function(e) {
+                validateCurrentPhone();
+                
+                // Prevent further input if max digits reached
+                if (this.value.length >= currentCountryConfig.digits) {
+                    if (e.inputType !== 'deleteContentBackward' && e.inputType !== 'deleteContentForward') {
+                        this.value = this.value.substring(0, currentCountryConfig.digits);
+                    }
+                }
+            });
+            
+            // Prevent non-numeric input
+            phoneInput.addEventListener('keypress', function(e) {
+                const char = String.fromCharCode(e.which);
+                if (!/[0-9]/.test(char)) {
+                    e.preventDefault();
+                    showPhoneValidationStatus('Only numbers allowed', 'error');
+                }
+            });
+            
+            function validateCurrentPhone() {
+                const phoneNumber = phoneInput.value.trim();
+                
+                if (phoneNumber.length === 0) {
+                    document.getElementById('phoneValidationStatus').style.display = 'none';
+                    return false;
+                }
+                
+                const validation = validatePhoneByCountry(phoneNumber, currentCountryConfig);
+                
+                if (validation.valid) {
+                    showPhoneValidationStatus(validation.message, 'success');
+                    return true;
+                } else {
+                    showPhoneValidationStatus(validation.message, 'error');
+                    return false;
+                }
+            }
+            
+            // Initialize with default country
+            countrySelect.dispatchEvent(new Event('change'));
+            addDebugLog('Phone validation system initialized');
+        }
+
+        // Email verification functionality
         document.getElementById('verifyEmailBtn').addEventListener('click', async function() {
             const email = document.getElementById('email').value.trim().toLowerCase();
             const businessName = document.getElementById('businessName').value.trim();
+            const phoneNumber = document.getElementById('phoneNumber').value.trim();
+            const countryCode = document.getElementById('countryCode').value;
             
-            addDebugLog('Email verification started', { email, businessName });
+            addDebugLog('Email verification started', { email, businessName, phone: countryCode + phoneNumber });
             
             // Validation
             if (!email) {
@@ -429,21 +607,32 @@
                 return;
             }
 
-            // Disable button and show pending
+            if (!phoneNumber) {
+                showPhoneValidationStatus('Please enter your phone number', 'error');
+                return;
+            }
+
+            const phoneValidation = validatePhoneByCountry(phoneNumber, currentCountryConfig);
+            if (!phoneValidation.valid) {
+                showPhoneValidationStatus(phoneValidation.message, 'error');
+                return;
+            }
+
+            const completePhoneNumber = countryCode + phoneNumber;
+            
             this.disabled = true;
             this.textContent = 'Verifying...';
             showVerificationStatus('Sending verification email...', 'pending');
 
             try {
-                // Generate OTP
                 generatedOTP = generateOTP();
                 addDebugLog('Generated OTP', { otp: generatedOTP });
                 
-                // Create payload
                 const emailVerificationData = {
                     action: 'email_verification',
                     email: email,
                     businessName: businessName,
+                    phoneNumber: completePhoneNumber,
                     otp: generatedOTP,
                     timestamp: new Date().toISOString(),
                     source: 'quickport_registration_form',
@@ -462,7 +651,6 @@
 
                 addDebugLog('Sending to ViaSocket webhook', emailVerificationData);
 
-                // Make request - SIMPLIFIED VERSION
                 const response = await fetch(VIASOCKET_WEBHOOK, {
                     method: 'POST',
                     mode: 'cors',
@@ -472,22 +660,14 @@
                     body: JSON.stringify(emailVerificationData)
                 });
 
-        // Initialize
-        addDebugLog('Quickport CRM Registration Form Initialized', {
-            webhookUrl: VIASOCKET_WEBHOOK,
-            timestamp: new Date().toISOString()
-        });
-
                 addDebugLog('ViaSocket response received', { 
                     status: response.status, 
                     ok: response.ok 
                 });
 
-                // CRITICAL FIX: Clone response before reading
                 const responseClone = response.clone();
                 
                 if (response.ok) {
-                    // Read from clone to avoid "already read" error
                     try {
                         const responseText = await responseClone.text();
                         addDebugLog('ViaSocket response body', responseText);
@@ -495,26 +675,19 @@
                         addDebugLog('Response body read error (non-critical)', readError.message);
                     }
                     
-                    // Success flow
                     otpSent = true;
                     this.textContent = 'OTP Sent ✓';
                     this.style.background = '#fbbf24';
                     showVerificationStatus('OTP sent to your email! Enter it below.', 'success');
                     addDebugLog('OTP sent successfully');
                     
-                    // Show OTP input
                     const otpContainer = document.getElementById('otpInputContainer');
                     otpContainer.style.display = 'block';
                     
-                    // Add OTP input handler
                     setTimeout(() => {
                         const otpInput = document.getElementById('otpInput');
                         otpInput.focus();
                         
-                        // Remove existing listener if any
-                        otpInput.onInput = null;
-                        
-                        // Add new listener
                         otpInput.addEventListener('input', function() {
                             const enteredOTP = this.value.trim();
                             if (enteredOTP.length === 6) {
@@ -557,12 +730,14 @@
             const email = document.getElementById('email').value.trim().toLowerCase();
             const businessName = document.getElementById('businessName').value.trim();
             const phoneNumber = document.getElementById('phoneNumber').value.trim();
+            const countryCode = document.getElementById('countryCode').value;
+            const completePhoneNumber = countryCode + phoneNumber;
             
             const registrationData = {
                 action: 'business_registration',
                 email: email,
                 businessName: businessName,
-                phoneNumber: phoneNumber,
+                phoneNumber: completePhoneNumber,
                 timestamp: new Date().toISOString(),
                 source: 'quickport_registration_form'
             };
@@ -598,19 +773,6 @@
             }
         });
 
-        function showVerificationStatus(message, type) {
-            const statusDiv = document.getElementById('verificationStatus');
-            statusDiv.textContent = message;
-            statusDiv.className = `verification-status status-${type}`;
-            statusDiv.style.display = 'block';
-            
-            if (type === 'success') {
-                setTimeout(() => {
-                    statusDiv.style.display = 'none';
-                }, 5000);
-            }
-        }
-
         // Reset on email change
         document.getElementById('email').addEventListener('input', function() {
             emailVerified = false;
@@ -624,64 +786,13 @@
             document.getElementById('otpInput').value = '';
         });
 
-        // Real-time phone number validation
-        document.getElementById('phoneNumber').addEventListener('input', function() {
-            const phoneNumber = this.value.trim();
-            
-            if (phoneNumber.length === 0) {
-                document.getElementById('phoneValidationStatus').style.display = 'none';
-                return;
-            }
-            
-            // Check for invalid characters immediately
-            if (!/^[\d\s\-\(\)\+]*$/.test(phoneNumber)) {
-                showPhoneValidationStatus('Only numbers, spaces, and +91 allowed', 'error');
-                return;
-            }
-            
-            if (phoneNumber.length >= 10) {
-                if (isValidPhoneNumber(phoneNumber)) {
-                    const formattedPhone = formatPhoneNumber(phoneNumber);
-                    if (this.value !== formattedPhone) {
-                        this.value = formattedPhone;
-                    }
-                    showPhoneValidationStatus('Valid phone number', 'success');
-                } else {
-                    showPhoneValidationStatus('Invalid Indian mobile number', 'error');
-                }
-            } else if (phoneNumber.length >= 3) {
-                // Check if starts with valid digits
-                const cleanPhone = phoneNumber.replace(/[\s\-\(\)\+]/g, '');
-                if (cleanPhone.length > 0 && !/^(\+?91)?[6-9]/.test(cleanPhone)) {
-                    showPhoneValidationStatus('Indian mobile numbers start with 6, 7, 8, or 9', 'error');
-                } else {
-                    showPhoneValidationStatus('Continue typing...', 'pending');
-                }
-            }
-        });
-
-        // Additional validation on keypress to prevent invalid characters
-        document.getElementById('phoneNumber').addEventListener('keypress', function(e) {
-            const char = String.fromCharCode(e.which);
-            if (!/[\d\s\-\(\)\+]/.test(char)) {
-                e.preventDefault();
-                showPhoneValidationStatus('Only numbers and +91 allowed', 'error');
-            }
-        });
-
-        // Phone number formatting on blur
-        document.getElementById('phoneNumber').addEventListener('blur', function() {
-            const phoneNumber = this.value.trim();
-            if (phoneNumber && isValidPhoneNumber(phoneNumber)) {
-                this.value = formatPhoneNumber(phoneNumber);
-                showPhoneValidationStatus('Phone number formatted', 'success');
-            }
-        });
-
-        // Initialize
-        addDebugLog('Quickport CRM Registration Form Initialized', {
-            webhookUrl: VIASOCKET_WEBHOOK,
-            timestamp: new Date().toISOString()
+        // Initialize everything when page loads
+        document.addEventListener('DOMContentLoaded', function() {
+            initializePhoneValidation();
+            addDebugLog('Quickport CRM Registration Form Initialized', {
+                webhookUrl: VIASOCKET_WEBHOOK,
+                timestamp: new Date().toISOString()
+            });
         });
     </script>
 </body>
