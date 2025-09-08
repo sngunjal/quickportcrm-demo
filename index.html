@@ -618,6 +618,39 @@
             document.getElementById('otpInput').value = '';
         });
 
+        // Real-time phone number validation
+        document.getElementById('phoneNumber').addEventListener('input', function() {
+            const phoneNumber = this.value.trim();
+            
+            if (phoneNumber.length === 0) {
+                document.getElementById('phoneValidationStatus').style.display = 'none';
+                return;
+            }
+            
+            if (phoneNumber.length >= 10) {
+                if (isValidPhoneNumber(phoneNumber)) {
+                    const formattedPhone = formatPhoneNumber(phoneNumber);
+                    if (this.value !== formattedPhone) {
+                        this.value = formattedPhone;
+                    }
+                    showPhoneValidationStatus('Valid phone number', 'success');
+                } else {
+                    showPhoneValidationStatus('Invalid phone number format', 'error');
+                }
+            } else if (phoneNumber.length >= 5) {
+                showPhoneValidationStatus('Phone number too short', 'pending');
+            }
+        });
+
+        // Phone number formatting on blur
+        document.getElementById('phoneNumber').addEventListener('blur', function() {
+            const phoneNumber = this.value.trim();
+            if (phoneNumber && isValidPhoneNumber(phoneNumber)) {
+                this.value = formatPhoneNumber(phoneNumber);
+                showPhoneValidationStatus('Phone number formatted', 'success');
+            }
+        });
+
         // Initialize
         addDebugLog('Quickport CRM Registration Form Initialized', {
             webhookUrl: VIASOCKET_WEBHOOK,
