@@ -627,6 +627,12 @@
                 return;
             }
             
+            // Check for invalid characters immediately
+            if (!/^[\d\s\-\(\)\+]*$/.test(phoneNumber)) {
+                showPhoneValidationStatus('Only numbers, spaces, and +91 allowed', 'error');
+                return;
+            }
+            
             if (phoneNumber.length >= 10) {
                 if (isValidPhoneNumber(phoneNumber)) {
                     const formattedPhone = formatPhoneNumber(phoneNumber);
@@ -635,10 +641,25 @@
                     }
                     showPhoneValidationStatus('Valid phone number', 'success');
                 } else {
-                    showPhoneValidationStatus('Invalid phone number format', 'error');
+                    showPhoneValidationStatus('Invalid Indian mobile number', 'error');
                 }
-            } else if (phoneNumber.length >= 5) {
-                showPhoneValidationStatus('Phone number too short', 'pending');
+            } else if (phoneNumber.length >= 3) {
+                // Check if starts with valid digits
+                const cleanPhone = phoneNumber.replace(/[\s\-\(\)\+]/g, '');
+                if (cleanPhone.length > 0 && !/^(\+?91)?[6-9]/.test(cleanPhone)) {
+                    showPhoneValidationStatus('Indian mobile numbers start with 6, 7, 8, or 9', 'error');
+                } else {
+                    showPhoneValidationStatus('Continue typing...', 'pending');
+                }
+            }
+        });
+
+        // Additional validation on keypress to prevent invalid characters
+        document.getElementById('phoneNumber').addEventListener('keypress', function(e) {
+            const char = String.fromCharCode(e.which);
+            if (!/[\d\s\-\(\)\+]/.test(char)) {
+                e.preventDefault();
+                showPhoneValidationStatus('Only numbers and +91 allowed', 'error');
             }
         });
 
